@@ -28,6 +28,27 @@
         /* 아코디언(details) 스타일 제거 */
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
+        
+        /* 아코디언 스르륵 애니메이션을 위한 커스텀 스타일 */
+        details { transition: max-height 0.3s ease-out; overflow: hidden; }
+        details[open] { max-height: 1000px; } /* 충분히 큰 값 */
+        details:not([open]) { max-height: 64px; } /* 헤더 높이만큼만 */
+        
+        /* 룰렛 텍스트 흔들림 효과 */
+        .shake-text { animation: shake 0.1s infinite; }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-200 dark:bg-black text-gray-800 dark:text-gray-200 antialiased flex justify-center min-h-screen transition-colors duration-300">
@@ -69,20 +90,52 @@
         </main>
 
         <!-- 하단 네비게이션 -->
-        <nav class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 absolute bottom-0 w-full flex justify-around items-center pb-safe pt-2 pb-6 px-4 transition-colors duration-300">
+        <nav class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 absolute bottom-0 w-full flex justify-around items-center pb-safe pt-2 pb-6 px-4 transition-colors duration-300 z-40">
             <button class="flex flex-col items-center p-2 text-brand-600 dark:text-brand-400">
                 <i data-lucide="utensils" class="w-6 h-6 mb-1"></i>
                 <span class="text-[10px] font-bold">오늘 메뉴</span>
             </button>
-            <button class="flex flex-col items-center p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition">
-                <i data-lucide="heart" class="w-6 h-6 mb-1"></i>
-                <span class="text-[10px] font-medium">즐겨찾기</span>
+            <!-- [수정] 즐겨찾기 대신 점심 추천(룰렛) 버튼으로 변경 -->
+            <button onclick="openRecommendation()" class="flex flex-col items-center p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                <i data-lucide="sparkles" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">메뉴 추천</span>
             </button>
             <button class="flex flex-col items-center p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition">
                 <i data-lucide="settings" class="w-6 h-6 mb-1"></i>
                 <span class="text-[10px] font-medium">설정</span>
             </button>
         </nav>
+
+        <!-- [신규] 메뉴 추천 바텀 시트 (모달) -->
+        <div id="reco-modal" class="fixed inset-0 z-50 hidden flex flex-col justify-end pointer-events-none">
+            <!-- 어두운 배경 -->
+            <div id="reco-overlay" class="absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-300 pointer-events-auto backdrop-blur-sm" onclick="closeRecommendation()"></div>
+            
+            <!-- 하단에서 올라오는 카드 -->
+            <div id="reco-content" class="bg-white dark:bg-gray-800 w-full rounded-t-3xl p-6 pb-safe transform translate-y-full transition-transform duration-300 pointer-events-auto z-10 shadow-2xl">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-gray-900 dark:text-white">오늘 뭐 먹지? 🎲</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">학생식당 메뉴 중 하나를 골라드릴게요!</p>
+                    </div>
+                    <button onclick="closeRecommendation()" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 dark:text-gray-300">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- 룰렛 결과 표시 영역 -->
+                <div id="reco-result-box" class="h-40 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-700/50 rounded-2xl border-2 border-brand-100 dark:border-brand-900 overflow-hidden relative mb-4 transition-all">
+                    <div id="reco-corner-text" class="text-sm font-bold text-gray-400 dark:text-gray-500 mb-2 h-5"></div>
+                    <div id="reco-spinning-text" class="text-2xl font-black text-gray-900 dark:text-white text-center px-4">버튼을 눌러<br>메뉴를 뽑아보세요!</div>
+                    <p id="reco-price-text" class="text-brand-600 dark:text-brand-400 font-bold mt-2 text-lg h-7"></p>
+                </div>
+
+                <button id="reco-btn" onclick="startRoulette()" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 rounded-2xl transition-colors shadow-lg shadow-brand-500/30 text-lg flex justify-center items-center gap-2">
+                    <i data-lucide="dices" class="w-5 h-5"></i> 메뉴 뽑기
+                </button>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -91,6 +144,10 @@
         let currentTab = 'student';
         let isDarkMode = false;
         let isCalendarOpen = false;
+
+        // 룰렛 관련 변수
+        let allStudentMenus = [];
+        let rouletteInterval;
 
         function toggleDarkMode() {
             isDarkMode = !isDarkMode;
@@ -186,25 +243,17 @@
             }
         }
 
-        // 아코디언 열기/닫기 스르륵 애니메이션 로직
-        function toggleAccordion(btn) {
-            const content = btn.nextElementSibling;
-            const icon = btn.querySelector('.chevron-icon');
-            
-            if (content.style.maxHeight && content.style.maxHeight !== '0px') {
-                // 닫기
-                content.style.maxHeight = '0px';
-                content.style.opacity = '0';
-                icon.style.transform = 'rotate(0deg)';
+        // 아코디언 기본 동작 제어 (스르륵 효과)
+        function toggleDetails(event) {
+            event.preventDefault(); // 기본 팍 열리는 동작 차단
+            const details = event.currentTarget.parentNode;
+            if (details.hasAttribute('open')) {
+                details.removeAttribute('open');
             } else {
-                // 열기 (내부 컨텐츠의 실제 높이만큼 부드럽게 늘어남)
-                content.style.maxHeight = content.scrollHeight + 'px';
-                content.style.opacity = '1';
-                icon.style.transform = 'rotate(180deg)';
+                details.setAttribute('open', '');
             }
         }
 
-        // 학생식당 카드 렌더링 (스르륵 애니메이션 아코디언 적용)
         function createStudentCard(cornerData) {
             if (!cornerData.items || cornerData.items.length === 0) return '';
             
@@ -216,31 +265,27 @@
             `).join('');
 
             return `
-                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none mb-4 border border-gray-100 dark:border-gray-700 fade-in overflow-hidden">
-                    <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-5 cursor-pointer select-none outline-none">
+                <details class="group bg-white dark:bg-gray-800 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none mb-4 border border-gray-100 dark:border-gray-700 fade-in">
+                    <summary onclick="toggleDetails(event)" class="flex items-center justify-between p-5 cursor-pointer select-none h-16">
                         <div class="flex items-center">
                             <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-xl mr-3 text-gray-500 dark:text-gray-300">
                                 <i data-lucide="${cornerData.icon}" class="w-5 h-5"></i>
                             </div>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white">${cornerData.corner}</h3>
                         </div>
-                        <div class="text-gray-400 transition-transform duration-300 chevron-icon">
+                        <div class="text-gray-400 transition-transform duration-300 group-open:rotate-180">
                             <i data-lucide="chevron-down" class="w-5 h-5"></i>
                         </div>
-                    </button>
-                    <!-- 높이(max-height) 0px부터 시작하여 부드럽게 열림 -->
-                    <div class="accordion-content transition-all duration-300 ease-in-out" style="max-height: 0px; opacity: 0; overflow: hidden;">
-                        <div class="px-5 pb-5 pt-1 border-t border-gray-50 dark:border-gray-800/50">
-                            <div class="flex flex-col">
-                                ${itemsHtml}
-                            </div>
+                    </summary>
+                    <div class="px-5 pb-5 pt-1 border-t border-gray-50 dark:border-gray-800/50">
+                        <div class="flex flex-col">
+                            ${itemsHtml}
                         </div>
                     </div>
-                </div>
+                </details>
             `;
         }
 
-        // 교직원식당 카드 렌더링 (하트 제거)
         function createStaffCard(item) {
             if (!item.menus || item.menus.length === 0) return '';
             const menusHtml = item.menus.map(menu => 
@@ -279,7 +324,6 @@
 
             const selectedMenus = appData.daily_menus[currentDate][type];
 
-            // 데이터가 없거나, 코너는 있지만 세부 메뉴(items/menus)가 아예 없는 경우
             const hasData = selectedMenus && selectedMenus.length > 0 && selectedMenus.some(item => (item.items && item.items.length > 0) || (item.menus && item.menus.length > 0));
 
             if (!hasData) {
@@ -304,6 +348,130 @@
             lucide.createIcons();
         }
 
+        /* --- [신규] 메뉴 추천 (룰렛) 로직 --- */
+        
+        function openRecommendation() {
+            // 현재 선택된 날짜의 학생식당 메뉴를 모두 가져와 1차원 배열로 펼침
+            const todayMenus = appData.daily_menus[currentDate]?.student || [];
+            allStudentMenus = [];
+            
+            todayMenus.forEach(corner => {
+                if(corner.items) {
+                    corner.items.forEach(item => {
+                        allStudentMenus.push({ ...item, cornerName: corner.corner });
+                    });
+                }
+            });
+
+            if(allStudentMenus.length === 0) {
+                alert("이 날짜에는 추천할 학생식당 메뉴가 없습니다!");
+                return;
+            }
+
+            // 초기화
+            document.getElementById('reco-spinning-text').innerHTML = "버튼을 눌러<br>메뉴를 뽑아보세요!";
+            document.getElementById('reco-spinning-text').classList.remove('text-brand-600', 'dark:text-brand-400', 'scale-110');
+            document.getElementById('reco-corner-text').innerText = "";
+            document.getElementById('reco-price-text').innerText = "";
+            document.getElementById('reco-result-box').classList.remove('border-brand-500', 'bg-brand-50', 'dark:bg-brand-900/20');
+            
+            const btn = document.getElementById('reco-btn');
+            btn.innerHTML = `<i data-lucide="dices" class="w-5 h-5"></i> 메뉴 뽑기`;
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+            lucide.createIcons();
+
+            // 모달 열기 (바텀 시트 애니메이션)
+            const modal = document.getElementById('reco-modal');
+            const overlay = document.getElementById('reco-overlay');
+            const content = document.getElementById('reco-content');
+
+            modal.classList.remove('hidden');
+            // 브라우저 렌더링 딜레이를 살짝 주어 CSS transition이 작동하도록 함
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                content.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeRecommendation() {
+            const overlay = document.getElementById('reco-overlay');
+            const content = document.getElementById('reco-content');
+            
+            overlay.classList.add('opacity-0');
+            content.classList.add('translate-y-full');
+            
+            // 애니메이션이 끝난 후 hidden 처리
+            setTimeout(() => {
+                document.getElementById('reco-modal').classList.add('hidden');
+                clearInterval(rouletteInterval); // 혹시 돌아가고 있다면 정지
+            }, 300);
+        }
+
+        function startRoulette() {
+            if(allStudentMenus.length === 0) return;
+            
+            const textBox = document.getElementById('reco-spinning-text');
+            const cornerBox = document.getElementById('reco-corner-text');
+            const priceBox = document.getElementById('reco-price-text');
+            const resultBox = document.getElementById('reco-result-box');
+            const btn = document.getElementById('reco-btn');
+            
+            // 상태 초기화
+            cornerBox.innerText = "";
+            priceBox.innerText = "";
+            textBox.classList.remove('text-brand-600', 'dark:text-brand-400', 'scale-110');
+            resultBox.classList.remove('border-brand-500', 'bg-brand-50', 'dark:bg-brand-900/20');
+            
+            btn.disabled = true;
+            btn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> 고르는 중...`;
+            btn.classList.add('opacity-80');
+
+            let counter = 0;
+            const maxCounts = 25; // 룰렛 돌아가는 횟수 (약 1.2초)
+            
+            clearInterval(rouletteInterval);
+            
+            // 텍스트가 빠르게 변하는 시각적 효과
+            rouletteInterval = setInterval(() => {
+                const randomItem = allStudentMenus[Math.floor(Math.random() * allStudentMenus.length)];
+                textBox.innerText = randomItem.name;
+                textBox.classList.add('shake-text'); // 흔들림 효과
+                
+                counter++;
+                
+                if(counter >= maxCounts) {
+                    clearInterval(rouletteInterval);
+                    textBox.classList.remove('shake-text');
+                    finishRoulette(randomItem);
+                }
+            }, 50); 
+        }
+        
+        function finishRoulette(finalItem) {
+            const textBox = document.getElementById('reco-spinning-text');
+            const cornerBox = document.getElementById('reco-corner-text');
+            const priceBox = document.getElementById('reco-price-text');
+            const resultBox = document.getElementById('reco-result-box');
+            const btn = document.getElementById('reco-btn');
+            
+            // 결과 강조 스타일 적용
+            textBox.innerText = finalItem.name;
+            textBox.classList.add('text-brand-600', 'dark:text-brand-400', 'scale-110', 'transition-transform', 'duration-300');
+            
+            cornerBox.innerText = finalItem.cornerName;
+            priceBox.innerText = finalItem.price;
+            
+            resultBox.classList.add('border-brand-500', 'bg-brand-50', 'dark:bg-brand-900/20');
+            
+            // 버튼을 '다시 뽑기'로 변경
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="rotate-cw" class="w-5 h-5"></i> 다시 뽑기`;
+            btn.classList.remove('opacity-80');
+            lucide.createIcons();
+        }
+
+        // 초기 실행
         lucide.createIcons();
         fetchMenuData();
     </script>
