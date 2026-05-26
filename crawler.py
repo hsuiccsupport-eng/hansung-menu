@@ -2,17 +2,31 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # 한성대학교 식당 메뉴 URL
 URL_STUDENT = "https://hansung.ac.kr/hansung/6332/subview.do"
 URL_STAFF = "https://hansung.ac.kr/hansung/6333/subview.do"
 
+def get_this_week_dates():
+    """이번 주 월~금의 날짜 문자열(YYYY-MM-DD) 리스트를 반환합니다."""
+    today = datetime.today()
+    monday = today - timedelta(days=today.weekday())
+    return [(monday + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(5)]
+
+def get_empty_student_menu():
+    """학생식당 빈 코너 템플릿 생성"""
+    return [
+        {"corner": "덮밥 / 비빔밥", "icon": "bowl", "items": []},
+        {"corner": "면류 / 찌개", "icon": "soup", "items": []},
+        {"corner": "볶음밥 / 오므라이스 / 돈까스", "icon": "utensils-crossed", "items": []}
+    ]
+
 def get_html(url):
     """지정된 URL에서 HTML 콘텐츠를 가져옵니다."""
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
         }
         response = requests.get(url, headers=headers)
         response.raise_for_status()
@@ -22,78 +36,74 @@ def get_html(url):
         return None
 
 def parse_student_menu(html):
-    """학생 식당 HTML에서 메뉴 데이터를 추출합니다."""
+    """학생 식당 HTML에서 요일별 메뉴 데이터를 추출합니다."""
     soup = BeautifulSoup(html, 'html.parser')
     
-    student_menu = [
-        {"corner": "덮밥 / 비빔밥", "icon": "bowl", "items": []},
-        {"corner": "면류 / 찌개", "icon": "soup", "items": []},
-        {"corner": "볶음밥 / 오므라이스 / 돈까스", "icon": "utensils-crossed", "items": []}
-    ]
+    # 5일치(월~금) 빈 데이터를 미리 생성
+    daily_menus = [get_empty_student_menu() for _ in range(5)]
     
     tables = soup.find_all('table')
     if not tables:
-        return student_menu
+        return daily_menus
 
     text_content = tables[0].get_text(separator='\n')
     lines = text_content.split('\n')
     
-    # 정규표현식: 날짜 요일 패턴 찾기 (예: (월), (화))
-    date_pattern = re.compile(r'\([월화수목금토일]\)')
-    # 정규표현식: 가격 형태 찾기 (3자리 이상 숫자 콤마 포함)
     price_pattern = re.compile(r'([1-9][0-9]*,?[0-9]{3})(?:원)?')
     
-    # 중복 메뉴 방지를 위한 세트(Set)
-    seen_items = set()
+    # 기본적으로 5일 전체에 공통 적용된다고 가정 (메뉴가 1주일 내내 동일할 경우)
+    target_days = [0, 1, 2, 3, 4]
+    seen_items_per_day = [set() for _ in range(5)]
     
     for line in lines:
         line = line.strip()
         if not line:
             continue
             
-        # 1. 날짜가 포함된 줄(예: 2026.05.25 (월))은 메뉴가 아니므로 건너뛰기
-        if date_pattern.search(line):
+        # 요일 감지 (해당 요일이 나오면, 그 이후의 메뉴는 해당 요일에만 적용)
+        day_match = re.search(r'\(([월화수목금])\)', line)
+        if day_match:
+            day_char = day_match.group(1)
+            day_idx = ['월', '화', '수', '목', '금'].index(day_char)
+            target_days = [day_idx] # 타겟 요일 변경
             continue
             
-        # 2. 테이크아웃(ⓣ) 기호는 화면을 위해 깔끔하게 제거하되 메뉴는 살림
         line = line.replace('ⓣ', '').strip()
-            
         match = price_pattern.search(line)
+        
         if match:
             price_str = match.group(1)
-            
-            # 3. 우연히 4자리 숫자가 잡히는 것을 방지 (학식 가격은 보통 00으로 끝남)
             price_val = price_str.replace(',', '')
             if not price_val.endswith('00'):
                 continue
                 
             name = line.replace(price_str, '').replace('원', '').strip()
-            
-            # 4. 중복 검사: 이미 들어간 메뉴라면 추가하지 않음
-            if name in seen_items:
-                continue
-            seen_items.add(name)
-            
             item = {"name": name, "price": f"{price_str}원"}
             
-            # 5. 코너 분류
-            if any(keyword in name for keyword in ['면', '라면', '찌개', '모밀', '국수']):
-                student_menu[1]['items'].append(item)
-            elif any(keyword in name for keyword in ['돈까스', '오므라이스', '볶음밥', '치즈볼']):
-                student_menu[2]['items'].append(item)
-            else:
-                student_menu[0]['items'].append(item)
+            # 지정된 타겟 요일들에 메뉴 추가
+            for d_idx in target_days:
+                if name in seen_items_per_day[d_idx]:
+                    continue
+                seen_items_per_day[d_idx].add(name)
+                
+                # 코너 분류
+                if any(keyword in name for keyword in ['면', '라면', '찌개', '모밀', '국수', '우동', '짬뽕']):
+                    daily_menus[d_idx][1]['items'].append(item)
+                elif any(keyword in name for keyword in ['돈까스', '오므라이스', '볶음밥', '치즈볼', '카츠']):
+                    daily_menus[d_idx][2]['items'].append(item)
+                else:
+                    daily_menus[d_idx][0]['items'].append(item)
 
-    return student_menu
+    return daily_menus
 
 def parse_staff_menu(html):
-    """교직원 식당 HTML에서 메뉴 데이터를 추출합니다."""
+    """교직원 식당 HTML에서 요일별 메뉴 데이터를 추출합니다."""
     soup = BeautifulSoup(html, 'html.parser')
-    staff_menu = []
+    staff_menu_list = []
     
     tables = soup.find_all('table')
     if not tables:
-        return staff_menu
+        return [[] for _ in range(5)]
         
     rows = tables[0].find_all('tr')
     
@@ -102,30 +112,27 @@ def parse_staff_menu(html):
         cells_text = [cell.get_text(strip=True, separator=' ') for cell in cells]
         
         for text in cells_text:
-            # 밥, 국, 찌개, 김치 등의 식단 키워드가 포함된 셀을 찾음
-            if '밥' in text and ('국' in text or '찌개' in text or '김치' in text):
-                
-                # [핵심 수정] 정규표현식을 이용해 괄호 '(' 부터 ')' 까지의 내용(원산지 등)을 아예 삭제합니다.
+            if '밥' in text and ('국' in text or '찌개' in text or '김치' in text or '샐러드' in text):
                 text_no_brackets = re.sub(r'\([^)]*\)', '', text)
-                
-                # [핵심 수정] 쉼표(,) 슬래시(/) 외에도 공백(\s+)을 기준으로 메뉴를 정확히 분리합니다.
                 raw_menus = re.split(r'[,/\s]+', text_no_brackets)
-                
-                # 빈 문자열 및 의미 없는 1글자 짜리 기호 등은 리스트에서 제외
                 clean_menus = [m.strip() for m in raw_menus if len(m.strip()) > 1]
                 
-                staff_menu.append({
+                staff_menu_list.append([{
                     "type": "중식",
                     "time": "11:30 ~ 13:30",
-                    "menus": clean_menus, # 제한 없이 추출된 모든 메뉴(유자차 등)를 표시
+                    "menus": clean_menus,
                     "price": "6,000원"
-                })
+                }])
                 break
-        
-        if staff_menu:
+                
+        if len(staff_menu_list) >= 5:
             break
 
-    return staff_menu
+    # 홈페이지에 식단이 5일치 미만으로 올라왔을 경우 빈 공간 채우기
+    while len(staff_menu_list) < 5:
+        staff_menu_list.append([])
+
+    return staff_menu_list
 
 def main():
     print("--- 학식 메뉴 크롤링 시작 ---")
@@ -137,13 +144,22 @@ def main():
         print("HTML을 가져오지 못해 크롤링을 중단합니다.")
         return
 
-    student_data = parse_student_menu(html_student)
-    staff_data = parse_staff_menu(html_staff)
+    student_data_list = parse_student_menu(html_student)
+    staff_data_list = parse_staff_menu(html_staff)
+    
+    week_dates = get_this_week_dates()
+    daily_menus = {}
+    
+    # 요일별(0~4)로 묶어서 JSON 구조화
+    for i, date_str in enumerate(week_dates):
+        daily_menus[date_str] = {
+            "student": student_data_list[i],
+            "staff": staff_data_list[i]
+        }
     
     menu_data = {
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "student": student_data,
-        "staff": staff_data
+        "daily_menus": daily_menus
     }
     
     with open('menu_data.json', 'w', encoding='utf-8') as f:
