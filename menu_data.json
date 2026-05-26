@@ -1,129 +1,22 @@
 {
-    "updated_at": "2026-05-26 07:22:55",
+    "updated_at": "2026-05-26 07:33:23",
     "daily_menus": {
         "2026-05-25": {
             "student": [
                 {
                     "corner": "덮밥 / 비빔밥",
-                    "icon": "bowl",
-                    "items": [
-                        {
-                            "name": "에비카레동",
-                            "price": "5,000원"
-                        },
-                        {
-                            "name": "고추치킨카레동",
-                            "price": "5,500원"
-                        },
-                        {
-                            "name": "새우튀김알밥",
-                            "price": "5,300원"
-                        },
-                        {
-                            "name": "마그마새우튀김알밥",
-                            "price": "5,500원"
-                        },
-                        {
-                            "name": "치킨마요",
-                            "price": "4,800원"
-                        },
-                        {
-                            "name": "마그마치킨마요",
-                            "price": "5,000원"
-                        },
-                        {
-                            "name": "삼겹살강된장비빔밥",
-                            "price": "5,500원"
-                        },
-                        {
-                            "name": "소불고기잡채밥",
-                            "price": "6,000원"
-                        },
-                        {
-                            "name": "제육덮밥",
-                            "price": "5,000원"
-                        },
-                        {
-                            "name": "삼겹된장짜글이",
-                            "price": "6,000원"
-                        },
-                        {
-                            "name": "공기밥",
-                            "price": "1,000원"
-                        },
-                        {
-                            "name": "케네디소시지",
-                            "price": "3,000원"
-                        },
-                        {
-                            "name": "닭강정",
-                            "price": "4,800원"
-                        },
-                        {
-                            "name": "소떡소떡",
-                            "price": "3,000원"
-                        }
-                    ]
+                    "icon": "utensils",
+                    "items": []
                 },
                 {
                     "corner": "면류 / 찌개",
                     "icon": "soup",
-                    "items": [
-                        {
-                            "name": "신라면(계란)",
-                            "price": "3,500원"
-                        },
-                        {
-                            "name": "신라면(계란+치즈)",
-                            "price": "4,000원"
-                        },
-                        {
-                            "name": "냉모밀",
-                            "price": "4,500원"
-                        },
-                        {
-                            "name": "에비냉모밀",
-                            "price": "5,000원"
-                        },
-                        {
-                            "name": "돈까스냉모밀정식",
-                            "price": "6,000원"
-                        }
-                    ]
+                    "items": []
                 },
                 {
                     "corner": "볶음밥 / 오므라이스 / 돈까스",
-                    "icon": "utensils-crossed",
-                    "items": [
-                        {
-                            "name": "돈까스카레동",
-                            "price": "5,000원"
-                        },
-                        {
-                            "name": "치즈고구마돈까스",
-                            "price": "5,800원"
-                        },
-                        {
-                            "name": "오므라이스",
-                            "price": "4,000원"
-                        },
-                        {
-                            "name": "돈까스오므라이스",
-                            "price": "5,500원"
-                        },
-                        {
-                            "name": "양념치킨오므라이스",
-                            "price": "5,000원"
-                        },
-                        {
-                            "name": "케네디소시지오므라이스",
-                            "price": "6,000원"
-                        },
-                        {
-                            "name": "쫀득바삭치즈볼(4알)",
-                            "price": "3,000원"
-                        }
-                    ]
+                    "icon": "chef-hat",
+                    "items": []
                 }
             ],
             "staff": []
@@ -132,7 +25,7 @@
             "student": [
                 {
                     "corner": "덮밥 / 비빔밥",
-                    "icon": "bowl",
+                    "icon": "utensils",
                     "items": [
                         {
                             "name": "에비카레동",
@@ -220,7 +113,7 @@
                 },
                 {
                     "corner": "볶음밥 / 오므라이스 / 돈까스",
-                    "icon": "utensils-crossed",
+                    "icon": "chef-hat",
                     "items": [
                         {
                             "name": "돈까스카레동",
@@ -275,7 +168,7 @@
             "student": [
                 {
                     "corner": "덮밥 / 비빔밥",
-                    "icon": "bowl",
+                    "icon": "utensils",
                     "items": [
                         {
                             "name": "에비카레동",
@@ -363,7 +256,7 @@
                 },
                 {
                     "corner": "볶음밥 / 오므라이스 / 돈까스",
-                    "icon": "utensils-crossed",
+                    "icon": "chef-hat",
                     "items": [
                         {
                             "name": "돈까스카레동",
@@ -418,7 +311,7 @@
             "student": [
                 {
                     "corner": "덮밥 / 비빔밥",
-                    "icon": "bowl",
+                    "icon": "utensils",
                     "items": [
                         {
                             "name": "에비카레동",
@@ -506,7 +399,7 @@
                 },
                 {
                     "corner": "볶음밥 / 오므라이스 / 돈까스",
-                    "icon": "utensils-crossed",
+                    "icon": "chef-hat",
                     "items": [
                         {
                             "name": "돈까스카레동",
@@ -561,7 +454,7 @@
             "student": [
                 {
                     "corner": "덮밥 / 비빔밥",
-                    "icon": "bowl",
+                    "icon": "utensils",
                     "items": [
                         {
                             "name": "에비카레동",
@@ -649,7 +542,7 @@
                 },
                 {
                     "corner": "볶음밥 / 오므라이스 / 돈까스",
-                    "icon": "utensils-crossed",
+                    "icon": "chef-hat",
                     "items": [
                         {
                             "name": "돈까스카레동",
