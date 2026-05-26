@@ -186,7 +186,7 @@
             }
         }
 
-        // 학생식당 카드 렌더링 (아코디언 UI 적용)
+        // 학생식당 카드 렌더링 (아코디언 UI 적용, 기본 닫힘 상태)
         function createStudentCard(cornerData) {
             if (!cornerData.items || cornerData.items.length === 0) return '';
             
@@ -198,9 +198,9 @@
             `).join('');
 
             // HTML details/summary 태그를 활용한 접기/펴기 (Accordion)
-            // group-open 클래스를 이용해 열렸을 때 화살표 회전
+            // open 속성을 제거하여 기본적으로 닫혀있도록 수정했습니다.
             return `
-                <details class="group bg-white dark:bg-gray-800 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none mb-4 border border-gray-100 dark:border-gray-700 fade-in" open>
+                <details class="group bg-white dark:bg-gray-800 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none mb-4 border border-gray-100 dark:border-gray-700 fade-in">
                     <summary class="flex items-center justify-between p-5 cursor-pointer select-none">
                         <div class="flex items-center">
                             <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-xl mr-3 text-gray-500 dark:text-gray-300">
@@ -228,7 +228,6 @@
                 `<span class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium px-3 py-1.5 rounded-xl">${menu}</span>`
             ).join('');
 
-            // 기존 하트(좋아요) 버튼 영역 삭제됨
             return `
                 <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none mb-5 border border-gray-100 dark:border-gray-700 fade-in">
                     <div class="flex justify-between items-center mb-5">
