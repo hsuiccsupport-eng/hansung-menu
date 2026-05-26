@@ -102,14 +102,22 @@ def parse_staff_menu(html):
         cells_text = [cell.get_text(strip=True, separator=' ') for cell in cells]
         
         for text in cells_text:
+            # 밥, 국, 찌개, 김치 등의 식단 키워드가 포함된 셀을 찾음
             if '밥' in text and ('국' in text or '찌개' in text or '김치' in text):
-                raw_menus = re.split(r'[,/]+|\s{2,}', text)
+                
+                # [핵심 수정] 정규표현식을 이용해 괄호 '(' 부터 ')' 까지의 내용(원산지 등)을 아예 삭제합니다.
+                text_no_brackets = re.sub(r'\([^)]*\)', '', text)
+                
+                # [핵심 수정] 쉼표(,) 슬래시(/) 외에도 공백(\s+)을 기준으로 메뉴를 정확히 분리합니다.
+                raw_menus = re.split(r'[,/\s]+', text_no_brackets)
+                
+                # 빈 문자열 및 의미 없는 1글자 짜리 기호 등은 리스트에서 제외
                 clean_menus = [m.strip() for m in raw_menus if len(m.strip()) > 1]
                 
                 staff_menu.append({
                     "type": "중식",
                     "time": "11:30 ~ 13:30",
-                    "menus": clean_menus[:7],
+                    "menus": clean_menus, # 제한 없이 추출된 모든 메뉴(유자차 등)를 표시
                     "price": "6,000원"
                 })
                 break
