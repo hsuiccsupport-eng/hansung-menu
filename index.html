@@ -74,11 +74,11 @@
             <!-- 캘린더 -->
             <div class="flex overflow-x-auto gap-2 mb-4 pb-1 hide-scroll fade-in" id="calendar-bar" style="display: none;"></div>
 
-            <!-- 탭 -->
+            <!-- 탭 (교직원식당을 왼쪽으로 이동) -->
             <div class="flex p-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-2xl relative">
                 <div id="tab-bg" class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-white dark:bg-gray-700 rounded-xl shadow-sm transition-all duration-300 ease-out z-0"></div>
-                <button onclick="switchTab('student')" id="tab-student" class="flex-1 py-2.5 text-sm font-semibold text-gray-900 dark:text-white z-10 relative transition-colors duration-300">학생식당</button>
-                <button onclick="switchTab('staff')" id="tab-staff" class="flex-1 py-2.5 text-sm font-semibold text-gray-500 dark:text-gray-400 z-10 relative transition-colors duration-300">교직원식당</button>
+                <button onclick="switchTab('staff')" id="tab-staff" class="flex-1 py-2.5 text-sm font-semibold text-gray-900 dark:text-white z-10 relative transition-colors duration-300">교직원식당</button>
+                <button onclick="switchTab('student')" id="tab-student" class="flex-1 py-2.5 text-sm font-semibold text-gray-500 dark:text-gray-400 z-10 relative transition-colors duration-300">학생식당</button>
             </div>
         </header>
 
@@ -95,7 +95,6 @@
                 <i data-lucide="utensils" class="w-6 h-6 mb-1"></i>
                 <span class="text-[10px] font-bold">오늘 메뉴</span>
             </button>
-            <!-- [수정] 즐겨찾기 대신 점심 추천(룰렛) 버튼으로 변경 -->
             <button onclick="openRecommendation()" class="flex flex-col items-center p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition">
                 <i data-lucide="sparkles" class="w-6 h-6 mb-1"></i>
                 <span class="text-[10px] font-medium">메뉴 추천</span>
@@ -106,7 +105,7 @@
             </button>
         </nav>
 
-        <!-- [신규] 메뉴 추천 바텀 시트 (모달) -->
+        <!-- 메뉴 추천 바텀 시트 (모달) -->
         <div id="reco-modal" class="fixed inset-0 z-50 hidden flex flex-col justify-end pointer-events-none">
             <!-- 어두운 배경 -->
             <div id="reco-overlay" class="absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-300 pointer-events-auto backdrop-blur-sm" onclick="closeRecommendation()"></div>
@@ -141,7 +140,7 @@
     <script>
         let appData = { daily_menus: {} };
         let currentDate = '';
-        let currentTab = 'student';
+        let currentTab = 'staff'; // 앱 구동 시 왼쪽인 교직원 식당을 기본으로 설정
         let isDarkMode = false;
         let isCalendarOpen = false;
 
@@ -243,9 +242,8 @@
             }
         }
 
-        // 아코디언 기본 동작 제어 (스르륵 효과)
         function toggleDetails(event) {
-            event.preventDefault(); // 기본 팍 열리는 동작 차단
+            event.preventDefault(); 
             const details = event.currentTarget.parentNode;
             if (details.hasAttribute('open')) {
                 details.removeAttribute('open');
@@ -323,7 +321,6 @@
             if (!appData.daily_menus[currentDate]) return;
 
             const selectedMenus = appData.daily_menus[currentDate][type];
-
             const hasData = selectedMenus && selectedMenus.length > 0 && selectedMenus.some(item => (item.items && item.items.length > 0) || (item.menus && item.menus.length > 0));
 
             if (!hasData) {
@@ -333,25 +330,24 @@
                         <p class="font-medium">이 날짜에는 등록된 식단이 없습니다.</p>
                     </div>`;
             } else {
-                if (type === 'student') {
-                    selectedMenus.forEach(item => container.innerHTML += createStudentCard(item));
-                    tabBg.style.transform = 'translateX(0)';
-                    tabStudent.className = "flex-1 py-2.5 text-sm font-semibold text-gray-900 dark:text-white z-10 relative transition-colors duration-300";
-                    tabStaff.className = "flex-1 py-2.5 text-sm font-semibold text-gray-500 dark:text-gray-400 z-10 relative transition-colors duration-300";
-                } else {
+                // 좌우 배치가 바뀌었으므로 애니메이션 및 폰트 강조 로직 수정
+                if (type === 'staff') {
                     selectedMenus.forEach(item => container.innerHTML += createStaffCard(item));
-                    tabBg.style.transform = 'translateX(100%)';
+                    tabBg.style.transform = 'translateX(0)'; // 교직원이 왼쪽
                     tabStaff.className = "flex-1 py-2.5 text-sm font-semibold text-gray-900 dark:text-white z-10 relative transition-colors duration-300";
                     tabStudent.className = "flex-1 py-2.5 text-sm font-semibold text-gray-500 dark:text-gray-400 z-10 relative transition-colors duration-300";
+                } else {
+                    selectedMenus.forEach(item => container.innerHTML += createStudentCard(item));
+                    tabBg.style.transform = 'translateX(100%)'; // 학생식당이 오른쪽
+                    tabStudent.className = "flex-1 py-2.5 text-sm font-semibold text-gray-900 dark:text-white z-10 relative transition-colors duration-300";
+                    tabStaff.className = "flex-1 py-2.5 text-sm font-semibold text-gray-500 dark:text-gray-400 z-10 relative transition-colors duration-300";
                 }
             }
             lucide.createIcons();
         }
 
-        /* --- [신규] 메뉴 추천 (룰렛) 로직 --- */
-        
+        // 룰렛 로직
         function openRecommendation() {
-            // 현재 선택된 날짜의 학생식당 메뉴를 모두 가져와 1차원 배열로 펼침
             const todayMenus = appData.daily_menus[currentDate]?.student || [];
             allStudentMenus = [];
             
@@ -368,7 +364,6 @@
                 return;
             }
 
-            // 초기화
             document.getElementById('reco-spinning-text').innerHTML = "버튼을 눌러<br>메뉴를 뽑아보세요!";
             document.getElementById('reco-spinning-text').classList.remove('text-brand-600', 'dark:text-brand-400', 'scale-110');
             document.getElementById('reco-corner-text').innerText = "";
@@ -381,13 +376,11 @@
             btn.classList.remove('opacity-50');
             lucide.createIcons();
 
-            // 모달 열기 (바텀 시트 애니메이션)
             const modal = document.getElementById('reco-modal');
             const overlay = document.getElementById('reco-overlay');
             const content = document.getElementById('reco-content');
 
             modal.classList.remove('hidden');
-            // 브라우저 렌더링 딜레이를 살짝 주어 CSS transition이 작동하도록 함
             setTimeout(() => {
                 overlay.classList.remove('opacity-0');
                 content.classList.remove('translate-y-full');
@@ -401,10 +394,9 @@
             overlay.classList.add('opacity-0');
             content.classList.add('translate-y-full');
             
-            // 애니메이션이 끝난 후 hidden 처리
             setTimeout(() => {
                 document.getElementById('reco-modal').classList.add('hidden');
-                clearInterval(rouletteInterval); // 혹시 돌아가고 있다면 정지
+                clearInterval(rouletteInterval);
             }, 300);
         }
 
@@ -417,7 +409,6 @@
             const resultBox = document.getElementById('reco-result-box');
             const btn = document.getElementById('reco-btn');
             
-            // 상태 초기화
             cornerBox.innerText = "";
             priceBox.innerText = "";
             textBox.classList.remove('text-brand-600', 'dark:text-brand-400', 'scale-110');
@@ -428,15 +419,14 @@
             btn.classList.add('opacity-80');
 
             let counter = 0;
-            const maxCounts = 25; // 룰렛 돌아가는 횟수 (약 1.2초)
+            const maxCounts = 25;
             
             clearInterval(rouletteInterval);
             
-            // 텍스트가 빠르게 변하는 시각적 효과
             rouletteInterval = setInterval(() => {
                 const randomItem = allStudentMenus[Math.floor(Math.random() * allStudentMenus.length)];
                 textBox.innerText = randomItem.name;
-                textBox.classList.add('shake-text'); // 흔들림 효과
+                textBox.classList.add('shake-text');
                 
                 counter++;
                 
@@ -455,7 +445,6 @@
             const resultBox = document.getElementById('reco-result-box');
             const btn = document.getElementById('reco-btn');
             
-            // 결과 강조 스타일 적용
             textBox.innerText = finalItem.name;
             textBox.classList.add('text-brand-600', 'dark:text-brand-400', 'scale-110', 'transition-transform', 'duration-300');
             
@@ -464,14 +453,12 @@
             
             resultBox.classList.add('border-brand-500', 'bg-brand-50', 'dark:bg-brand-900/20');
             
-            // 버튼을 '다시 뽑기'로 변경
             btn.disabled = false;
             btn.innerHTML = `<i data-lucide="rotate-cw" class="w-5 h-5"></i> 다시 뽑기`;
             btn.classList.remove('opacity-80');
             lucide.createIcons();
         }
 
-        // 초기 실행
         lucide.createIcons();
         fetchMenuData();
     </script>
